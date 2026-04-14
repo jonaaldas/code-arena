@@ -48,4 +48,4 @@ jobs:
 
       - name: Deploy on VPS
         run: |
-          ssh -i ~/.ssh/id_ed25519 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd ~/apps/myapps && docker compose pull && docker compose up -d"
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd ~/apps/myapp && docker compose pull && docker compose up -d"
