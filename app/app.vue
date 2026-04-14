@@ -1,3 +1,3 @@
 <template>
-  <div>Welcome To Code Arena!!</div>
+  <div>Welcome To Code Arena!! With new auto workflow</div>
 </template>
