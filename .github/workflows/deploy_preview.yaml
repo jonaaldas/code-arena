@@ -85,11 +85,11 @@ jobs:
             cat > "\$APP_DIR/docker-compose.yml" << COMPOSE
             services:
               app:
-                image: $IMAGE
+                image: \$IMAGE
                 container_name: code-arena-\$BRANCH_SLUG
                 restart: unless-stopped
                 ports:
-                  - "127.0.0.1:$PORT:3000"
+                  - "127.0.0.1:\$PORT:3000"
             COMPOSE
 
             docker compose -f "\$APP_DIR/docker-compose.yml" pull
@@ -97,8 +97,8 @@ jobs:
 
             sudo mkdir -p /etc/caddy/sites
             sudo tee /etc/caddy/sites/\$BRANCH_SLUG.caddy > /dev/null << CADDY
-            $DOMAIN {
-                reverse_proxy 127.0.0.1:$PORT
+            \$DOMAIN {
+                reverse_proxy 127.0.0.1:\$PORT
             }
             CADDY
 
