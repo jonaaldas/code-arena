@@ -1,3 +1,3 @@
 export default defineEventHandler(() => {
-    return 'Hello World TEST 123!'
+    return 'Hello World!'
 })  
