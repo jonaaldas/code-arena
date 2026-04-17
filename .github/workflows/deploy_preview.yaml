@@ -99,7 +99,14 @@ jobs:
           cat "$APP_DIR/docker-compose.yml"
 
           docker compose -f "$APP_DIR/docker-compose.yml" pull
-          docker compose -f "$APP_DIR/docker-compose.yml" up -d --force-recreate
+
+          echo "==> stopping any existing container"
+          docker compose -f "$APP_DIR/docker-compose.yml" down --remove-orphans --timeout 10 || true
+          docker rm -f "code-arena-$BRANCH_SLUG" 2>/dev/null \
+            || sudo docker rm -f "code-arena-$BRANCH_SLUG" 2>/dev/null \
+            || true
+
+          docker compose -f "$APP_DIR/docker-compose.yml" up -d
           echo "==> docker compose up finished"
 
           sudo mkdir -p /etc/caddy/sites
