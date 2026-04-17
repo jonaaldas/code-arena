@@ -6,7 +6,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
 
 jobs:
   preview:
@@ -14,9 +13,15 @@ jobs:
 
     env:
       IMAGE_NAME: jonaaldas/code-arena
-      BASE_DOMAIN: ${{ secrets.BASE_DOMAIN }}
 
     steps:
+      - name: Validate BASE_DOMAIN
+        run: |
+          if [ -z "${{ secrets.BASE_DOMAIN }}" ]; then
+            echo "BASE_DOMAIN secret is empty"
+            exit 1
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -49,7 +54,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push preview image
+      - name: Build and push image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -101,10 +106,12 @@ jobs:
           EOF
 
       - name: Comment preview link on PR
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/github-script@v7
         env:
           PREVIEW_URL: https://${{ steps.branch.outputs.domain }}
         with:
+          github-token: ${{ secrets.GH_COMMENT_TOKEN }}
           script: |
             const marker = '<!-- preview-link-comment -->';
             const body = `${marker}
@@ -121,7 +128,7 @@ jobs:
             });
 
             const existing = comments.find(comment =>
-              comment.user.type === 'Bot' && comment.body.includes(marker)
+              comment.body && comment.body.includes(marker)
             );
 
             if (existing) {
