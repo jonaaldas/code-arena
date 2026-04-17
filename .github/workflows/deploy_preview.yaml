@@ -70,40 +70,51 @@ jobs:
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy preview on VPS
+        env:
+          BRANCH_SLUG: ${{ steps.branch.outputs.slug }}
+          DOMAIN: ${{ steps.branch.outputs.domain }}
+          PORT: ${{ steps.branch.outputs.port }}
+          IMAGE: ${{ env.IMAGE_NAME }}:${{ steps.branch.outputs.slug }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
-          ssh -i ~/.ssh/id_ed25519 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << EOF
-            set -e
+          ssh -i ~/.ssh/id_ed25519 "$VPS_USER@$VPS_HOST" \
+            BRANCH_SLUG="$BRANCH_SLUG" \
+            DOMAIN="$DOMAIN" \
+            PORT="$PORT" \
+            IMAGE="$IMAGE" \
+            bash -s <<'REMOTE'
+          set -eux
 
-            BRANCH_SLUG="${{ steps.branch.outputs.slug }}"
-            DOMAIN="${{ steps.branch.outputs.domain }}"
-            PORT="${{ steps.branch.outputs.port }}"
-            IMAGE="${{ env.IMAGE_NAME }}:${{ steps.branch.outputs.slug }}"
-            APP_DIR="\$HOME/apps/previews/\$BRANCH_SLUG"
+          echo "==> remote env: BRANCH_SLUG=$BRANCH_SLUG DOMAIN=$DOMAIN PORT=$PORT IMAGE=$IMAGE"
 
-            mkdir -p "\$APP_DIR"
+          APP_DIR="$HOME/apps/previews/$BRANCH_SLUG"
+          mkdir -p "$APP_DIR"
+          echo "==> APP_DIR=$APP_DIR"
 
-            cat > "\$APP_DIR/docker-compose.yml" << COMPOSE
-            services:
-              app:
-                image: \$IMAGE
-                container_name: code-arena-\$BRANCH_SLUG
-                restart: unless-stopped
-                ports:
-                  - "127.0.0.1:\$PORT:3000"
-            COMPOSE
+          printf 'services:\n  app:\n    image: %s\n    container_name: code-arena-%s\n    restart: unless-stopped\n    ports:\n      - "127.0.0.1:%s:3000"\n' \
+            "$IMAGE" "$BRANCH_SLUG" "$PORT" > "$APP_DIR/docker-compose.yml"
 
-            docker compose -f "\$APP_DIR/docker-compose.yml" pull
-            docker compose -f "\$APP_DIR/docker-compose.yml" up -d --force-recreate
+          echo "==> wrote docker-compose.yml:"
+          cat "$APP_DIR/docker-compose.yml"
 
-            sudo mkdir -p /etc/caddy/sites
-            sudo tee /etc/caddy/sites/\$BRANCH_SLUG.caddy > /dev/null << CADDY
-            \$DOMAIN {
-                reverse_proxy 127.0.0.1:\$PORT
-            }
-            CADDY
+          docker compose -f "$APP_DIR/docker-compose.yml" pull
+          docker compose -f "$APP_DIR/docker-compose.yml" up -d --force-recreate
+          echo "==> docker compose up finished"
 
-            sudo systemctl reload caddy
-          EOF
+          sudo mkdir -p /etc/caddy/sites
+          printf '%s {\n    reverse_proxy 127.0.0.1:%s\n}\n' "$DOMAIN" "$PORT" \
+            | sudo tee "/etc/caddy/sites/$BRANCH_SLUG.caddy" > /dev/null
+
+          echo "==> caddy site file at /etc/caddy/sites/$BRANCH_SLUG.caddy:"
+          sudo cat "/etc/caddy/sites/$BRANCH_SLUG.caddy"
+          echo "==> /etc/caddy/sites contents:"
+          sudo ls -la /etc/caddy/sites
+
+          sudo systemctl reload caddy
+          echo "==> caddy reloaded"
+          sudo systemctl status caddy --no-pager | head -n 20
+          REMOTE
 
       - name: Comment preview link on PR
         if: github.event.pull_request.head.repo.full_name == github.repository
