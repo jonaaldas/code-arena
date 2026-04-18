@@ -8,16 +8,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { authClient } from "@/lib/auth-client";
+import { useUserStore } from "@/stores/user";
 
+const userStore = useUserStore();
 const loading = ref(false);
 
 async function continueWithGithub() {
   loading.value = true;
-  await authClient.signIn.social({
-    provider: "github",
-    callbackURL: "/",
-  });
+  await userStore.signInWithGithub("/");
 }
 </script>
 
