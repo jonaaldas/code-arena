@@ -33,8 +33,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY --from=build /app/.output /app
-# Overwrite Nitro's (possibly incomplete) traced node_modules with the full one
-COPY --from=deps /app/node_modules /app/server/node_modules
+# Replace Nitro's (possibly incomplete) traced node_modules with the full production install
+COPY --from=deps /app/node_modules /tmp/node_modules
+RUN rm -rf /app/server/node_modules && mv /tmp/node_modules /app/server/node_modules
 
 EXPOSE 3000/tcp
 ENTRYPOINT ["bun", "run", "/app/server/index.mjs"]
