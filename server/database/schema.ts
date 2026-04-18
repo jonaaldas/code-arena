@@ -1,3 +1,4 @@
+import { time } from "drizzle-orm/mysql-core";
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
 export const user = sqliteTable("user", {
@@ -49,3 +50,20 @@ export const verification = sqliteTable("verification", {
   createdAt: integer("created_at", { mode: "timestamp" }),
   updatedAt: integer("updated_at", { mode: "timestamp" }),
 });
+
+// tables for 
+
+export const user_link_invitations = sqliteTable("user_link_invitations", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  link: text("link").notNull(),
+  sent: integer("sent", { mode: "boolean" }).notNull().default(false),
+  timestamp: integer("timestamp", { mode: "timestamp" }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+});
+
+
+export type NewUserLinkInvitation = typeof user_link_invitations.$inferInsert;

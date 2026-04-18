@@ -30,6 +30,11 @@ export const useUserStore = defineStore("user", () => {
     session.value = null;
   }
 
+  async function deleteAccount() {
+    await authClient.deleteUser();
+    session.value = null;
+  }
+
   return {
     session,
     user,
@@ -38,5 +43,6 @@ export const useUserStore = defineStore("user", () => {
     fetchUser,
     signInWithGithub,
     signOut,
+    deleteAccount,
   };
 });

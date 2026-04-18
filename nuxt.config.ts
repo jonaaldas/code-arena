@@ -2,8 +2,15 @@ import tailwindcss from "@tailwindcss/vite";
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
+  ssr: false,
   devtools: { enabled: true },
   modules: ['@pinia/nuxt'],
+  components: [
+    {
+      path: '~/components',
+      extensions: ['vue'],
+    },
+  ],
   css: ['~/assets/css/tailwind.css'],
   sourcemap: { server: false, client: false },
   vite: {

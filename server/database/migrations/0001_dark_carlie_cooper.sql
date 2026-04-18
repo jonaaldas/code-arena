@@ -1,0 +1,1 @@
+ALTER TABLE `user_link_invitations` ADD `sent` integer DEFAULT false NOT NULL;
