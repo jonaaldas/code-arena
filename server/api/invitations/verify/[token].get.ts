@@ -1,14 +1,16 @@
 import defineAuthenticatedEventHandler from "../../../utils/defineAuthHandler"
 import { db } from '../../../utils/db'
 import { user_link_invitations } from '../../../database/schema'
-import { eq } from "drizzle-orm"
+import { like } from "drizzle-orm"
 import { Result } from 'better-result'
 
 export default defineAuthenticatedEventHandler(async (event) => {
     const userId = event.context.user.id
-    const token = getRouterParams(event).token
-    const host = event.node.req.headers.host
-    const url = `http://${host}/invite/${token}`
+    const token = getRouterParam(event, 'token')
+
+    if (!token) {
+        throw createError({ statusCode: 400, statusMessage: 'Missing token' })
+    }
 
     const res = await Result.tryPromise({
         try: () =>
@@ -17,7 +19,7 @@ export default defineAuthenticatedEventHandler(async (event) => {
                 timestamp: user_link_invitations.timestamp,
             })
                 .from(user_link_invitations)
-                .where(eq(user_link_invitations.link, url))
+                .where(like(user_link_invitations.link, `%/invite/${token}`))
                 .limit(1),
         catch: (e) => (e instanceof Error ? e.message : 'Unknown error'),
     })
@@ -29,25 +31,21 @@ export default defineAuthenticatedEventHandler(async (event) => {
     const [row] = res.value
 
     if (!row) {
-        throw createError({ statusCode: 400, statusMessage: 'Invalid invitation token' })
+        throw createError({ statusCode: 404, statusMessage: 'Invalid invitation token' })
     }
 
     if (userId === row.userId) {
         throw createError({ statusCode: 400, statusMessage: 'You cannot accept your own invitation' })
     }
 
-    if (row.timestamp < new Date()) {
-        throw createError({ statusCode: 400, statusMessage: 'Invitation has expired' })
+    const GRACE_MS = 15 * 60 * 1000; // 15 min grace after scheduled time
+    if (row.timestamp.getTime() + GRACE_MS < Date.now()) {
+        throw createError({ statusCode: 410, statusMessage: 'This invitation has expired' })
     }
-
-    if (row.timestamp > new Date()) {
-        throw createError({ statusCode: 400, statusMessage: 'Invitation is not active yet' })
-    }
-
-
 
 
     return {
-        success: true,
+        valid: true,
+        scheduledAt: row.timestamp.toISOString(),
     }
 })

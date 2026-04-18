@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {
   CalendarDate,
-  parseAbsoluteToLocal,
   today,
   getLocalTimeZone,
   type DateValue,
@@ -76,11 +75,10 @@ const linkLocked = computed(() => isEditing.value && editingSent.value);
 
 const formattedDate = computed(() =>
   interviewDate.value
-    ? interviewDate.value.toDate('UTC').toLocaleDateString('en-US', {
+    ? interviewDate.value.toDate(getLocalTimeZone()).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
-        timeZone: 'UTC',
       })
     : ''
 );
@@ -89,19 +87,24 @@ const interviewUtcIso = computed(() => {
   if (!interviewDate.value || !interviewTime.value) return '';
   const [h, m] = interviewTime.value.split(':').map(Number);
   const d = interviewDate.value as CalendarDate;
-  return new Date(Date.UTC(d.year, d.month - 1, d.day, h, m)).toISOString();
+  return new Date(d.year, d.month - 1, d.day, h, m).toISOString();
 });
 
-function formatRowDate(iso: string) {
+const localTimezone = computed(() => getLocalTimeZone());
+
+function formatLocalDateTime(iso: string) {
   return new Date(iso).toLocaleString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: 'UTC',
     timeZoneName: 'short',
   });
+}
+
+function formatRowDate(iso: string) {
+  return formatLocalDateTime(iso);
 }
 
 function generateLink() {
@@ -156,10 +159,9 @@ function openEdit(row: Invitation) {
   editingId.value = row.id;
   editingSent.value = row.sent;
   inviteLink.value = row.link;
-  const abs = parseAbsoluteToLocal(row.scheduledAt);
-  interviewDate.value = new CalendarDate(abs.year, abs.month, abs.day);
   const d = new Date(row.scheduledAt);
-  interviewTime.value = `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+  interviewDate.value = new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate());
+  interviewTime.value = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   copied.value = false;
   open.value = true;
 }
@@ -256,7 +258,7 @@ if (userStore.user) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Scheduled (UTC)</TableHead>
+              <TableHead>Scheduled</TableHead>
               <TableHead>Link</TableHead>
               <TableHead>Sent</TableHead>
               <TableHead class="w-[140px] text-right">Actions</TableHead>
@@ -300,7 +302,7 @@ if (userStore.user) {
               {{
                 isEditing
                   ? 'Update the invitation details.'
-                  : 'Generate an invite link and set the interview time in UTC.'
+                  : 'Generate an invite link and set the interview time.'
               }}
             </DialogDescription>
             <Button
@@ -345,7 +347,10 @@ if (userStore.user) {
             </div>
 
             <div class="flex flex-col gap-2">
-              <Label>Interview date (UTC)</Label>
+              <Label>
+                Interview date
+                <span class="text-xs text-muted-foreground ml-1">({{ localTimezone }})</span>
+              </Label>
               <Popover>
                 <PopoverTrigger as-child>
                   <Button
@@ -364,12 +369,15 @@ if (userStore.user) {
             </div>
 
             <div class="flex flex-col gap-2">
-              <Label for="interview-time">Interview time (UTC)</Label>
+              <Label for="interview-time">
+                Interview time
+                <span class="text-xs text-muted-foreground ml-1">({{ localTimezone }})</span>
+              </Label>
               <Input id="interview-time" v-model="interviewTime" type="time" />
             </div>
 
             <p v-if="interviewUtcIso" class="text-xs text-muted-foreground">
-              Scheduled (UTC): {{ interviewUtcIso }}
+              Scheduled: {{ formatLocalDateTime(interviewUtcIso) }}
             </p>
           </div>
 

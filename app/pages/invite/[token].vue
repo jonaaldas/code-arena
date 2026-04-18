@@ -11,6 +11,9 @@ type VerifyResponse = {
 
 const route = useRoute();
 const token = computed(() => String(route.params.token ?? ''));
+const localTimezone = computed(() =>
+  import.meta.client ? Intl.DateTimeFormat().resolvedOptions().timeZone : ''
+);
 
 const loading = ref(true);
 const data = ref<VerifyResponse | null>(null);
@@ -24,7 +27,6 @@ const scheduledDisplay = computed(() => {
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: 'UTC',
     timeZoneName: 'short',
   });
 });
@@ -81,6 +83,9 @@ onMounted(verify);
           </div>
           <p v-if="scheduledDisplay">
             Scheduled for <strong>{{ scheduledDisplay }}</strong>
+            <span class="block text-xs text-muted-foreground mt-1">
+              Your local time ({{ localTimezone }})
+            </span>
           </p>
         </div>
 
