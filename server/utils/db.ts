@@ -1,5 +1,4 @@
-import { createClient } from "@libsql/client/web";
-import { drizzle } from "drizzle-orm/libsql";
+import { drizzle } from "drizzle-orm/libsql/http";
 import * as schema from "../database/schema";
 
 const appEnv = process.env.NUXT_APP_ENV === "prod" ? "prod" : "dev";
@@ -16,6 +15,7 @@ if (!url || !authToken) {
   throw new Error(`Missing Turso credentials for env=${appEnv}`);
 }
 
-const client = createClient({ url, authToken });
-
-export const db = drizzle(client, { schema });
+export const db = drizzle({
+  connection: { url, authToken },
+  schema,
+});
