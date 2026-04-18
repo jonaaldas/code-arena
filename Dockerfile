@@ -1,25 +1,33 @@
-# use the official Bun image
-# see all versions at https://hub.docker.com/r/oven/bun/tags
+# syntax=docker/dockerfile:1.7
+# Build stage
 FROM oven/bun:1 AS build
 WORKDIR /app
 
+ENV NODE_ENV=production \
+    NUXT_TELEMETRY_DISABLED=1
+
 COPY package.json bun.lock* ./
 
-# use ignore-scripts to avoid building node modules like better-sqlite3
-RUN bun install --frozen-lockfile --ignore-scripts
+# Cache the bun package store so reinstalls are near-instant
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --frozen-lockfile --ignore-scripts
 
-# Copy the entire project
 COPY . .
 
-RUN bun --bun run build
+# Cache Nuxt/Nitro/Vite build artefacts across runs.
+# These caches are NOT copied into the final image — they just speed up rebuilds.
+RUN --mount=type=cache,target=/app/node_modules/.cache \
+    --mount=type=cache,target=/app/.nuxt/cache \
+    --mount=type=cache,target=/app/.nitro/cache \
+    bun run build
 
-# copy production dependencies and source code into final image
-FROM oven/bun:1 AS production
+# Production stage — only the built output ships
+FROM oven/bun:1-slim AS production
 WORKDIR /app
 
-# Only `.output` folder is needed from the build stage
+ENV NODE_ENV=production
+
 COPY --from=build /app/.output /app
 
-# run the app
 EXPOSE 3000/tcp
-ENTRYPOINT [ "bun", "--bun", "run", "/app/server/index.mjs" ]
+ENTRYPOINT ["bun", "--bun", "run", "/app/server/index.mjs"]
