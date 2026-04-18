@@ -104,6 +104,7 @@ jobs:
           sed -i -E "s|127\.0\.0\.1:[0-9]+:3000|127.0.0.1:$PORT:3000|g" "$COMPOSE_FILE"
           sed -i -E "s|^([[:space:]]*env_file:[[:space:]]*).*$|\1../.env|" "$COMPOSE_FILE"
           sed -i -E "s|^([[:space:]]*BETTER_AUTH_URL:[[:space:]]*).*$|\1https://$DOMAIN|" "$COMPOSE_FILE"
+          sed -i -E "/^[[:space:]]*NUXT_APP_ENV:[[:space:]]*prod[[:space:]]*$/d" "$COMPOSE_FILE"
 
 
           echo "==> wrote docker-compose.yml:"
