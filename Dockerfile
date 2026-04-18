@@ -19,7 +19,7 @@ COPY . .
 RUN --mount=type=cache,target=/app/node_modules/.cache \
     --mount=type=cache,target=/app/.nuxt/cache \
     --mount=type=cache,target=/app/.nitro/cache \
-    bun run build
+    bunx nuxt prepare && bun run build
 
 # Production stage — only the built output ships
 FROM oven/bun:1-slim AS production
