@@ -17,15 +17,6 @@ export default defineNuxtConfig({
   },
   nitro: {
     minify: true,
-    // libsql uses conditional requires that @vercel/nft can't trace — force-include them
-    externals: {
-      inline: [
-        '@libsql/client',
-        '@libsql/hrana-client',
-        '@libsql/isomorphic-ws',
-        '@libsql/isomorphic-fetch',
-      ],
-    },
   },
   shadcn: {
     /**
