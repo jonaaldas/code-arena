@@ -59,8 +59,11 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          platforms: linux/amd64
           push: true
           tags: ${{ env.IMAGE_NAME }}:${{ steps.branch.outputs.slug }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Set up SSH key
         run: |
