@@ -1,4 +1,4 @@
-import { drizzle } from "drizzle-orm/libsql/http";
+import { drizzle } from "drizzle-orm/libsql";
 import * as schema from "../database/schema";
 
 const appEnv = process.env.NUXT_APP_ENV === "prod" ? "prod" : "dev";
