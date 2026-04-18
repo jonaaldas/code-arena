@@ -12,6 +12,11 @@ export const auth = betterAuth({
     provider: "sqlite",
     schema,
   }),
+  emailAndPassword: {
+    enabled: true,
+    autoSignIn: true,
+    requireEmailVerification: false,
+  },
   socialProviders: {
     github: {
       clientId: process.env.GITHUB_CLIENT_ID as string,
@@ -21,6 +26,15 @@ export const auth = betterAuth({
   user: {
     deleteUser: {
       enabled: true,
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => ({
+          data: { ...user, emailVerified: true },
+        }),
+      },
     },
   },
 });
