@@ -2,6 +2,7 @@
 import { Result } from 'better-result';
 import { IconCircleCheck, IconAlertTriangle, IconLoader2 } from '@tabler/icons-vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 type VerifyResponse = {
   valid: boolean;
@@ -11,9 +12,7 @@ type VerifyResponse = {
 
 const route = useRoute();
 const token = computed(() => String(route.params.token ?? ''));
-const localTimezone = computed(() =>
-  import.meta.client ? Intl.DateTimeFormat().resolvedOptions().timeZone : ''
-);
+const localTimezone = computed(() => (import.meta.client ? Intl.DateTimeFormat().resolvedOptions().timeZone : ''));
 
 const loading = ref(true);
 const data = ref<VerifyResponse | null>(null);
@@ -53,6 +52,26 @@ async function verify() {
   });
 }
 
+const accepting = ref(false);
+
+async function acceptInvitation() {
+  accepting.value = true;
+  const result = await Result.tryPromise({
+    try: () => $fetch(`/api/invitations/accept/${token.value}`, { method: 'POST' }),
+    catch: (e: any) => e?.data?.statusMessage || e?.message || 'Failed to accept invitation',
+  });
+  accepting.value = false;
+
+  result.match({
+    ok: () => {
+      useRouter().push(`/code/${token.value}`);
+    },
+    err: (m) => {
+      errorMessage.value = m;
+    },
+  });
+}
+
 onMounted(verify);
 </script>
 
@@ -83,9 +102,10 @@ onMounted(verify);
           </div>
           <p v-if="scheduledDisplay">
             Scheduled for <strong>{{ scheduledDisplay }}</strong>
-            <span class="block text-xs text-muted-foreground mt-1">
-              Your local time ({{ localTimezone }})
-            </span>
+            <span class="block text-xs text-muted-foreground mt-1"> Your local time ({{ localTimezone }}) </span>
+            <Button :disabled="accepting" @click="acceptInvitation">
+              {{ accepting ? 'Accepting…' : 'Start Interview' }}
+            </Button>
           </p>
         </div>
 

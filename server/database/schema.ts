@@ -65,5 +65,16 @@ export const user_link_invitations = sqliteTable("user_link_invitations", {
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
 });
 
+export const accepted_invitations = sqliteTable("accepted_invitations", {
+  id: text("id").primaryKey(),
+  invitationId: text("invitation_id")
+    .notNull()
+    .references(() => user_link_invitations.id, { onDelete: "cascade" }),
+  user_who_accepted: text("user_who_accepted").notNull(),
+  user_who_sent: text("user_who_sent").notNull(),
+  acceptedAt: integer("accepted_at", { mode: "timestamp" }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+});
 
 export type NewUserLinkInvitation = typeof user_link_invitations.$inferInsert;

@@ -47,6 +47,9 @@ type Invitation = {
   id: string;
   link: string;
   sent: boolean;
+  accepted: boolean;
+  acceptedAt: string | null;
+  acceptedBy: string | null;
   scheduledAt: string;
   createdAt: string;
   updatedAt: string;
@@ -260,7 +263,7 @@ if (userStore.user) {
             <TableRow>
               <TableHead>Scheduled</TableHead>
               <TableHead>Link</TableHead>
-              <TableHead>Sent</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead class="w-[140px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -271,9 +274,9 @@ if (userStore.user) {
               <TableCell>
                 <span
                   class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium"
-                  :class="row.sent ? 'bg-green-100 text-green-800' : 'bg-muted text-muted-foreground'"
+                  :class="row.accepted ? 'bg-green-100 text-green-800' : 'bg-muted text-muted-foreground'"
                 >
-                  {{ row.sent ? 'Sent' : 'Pending' }}
+                  {{ row.accepted ? 'Accepted' : 'Pending' }}
                 </span>
               </TableCell>
               <TableCell class="text-right">
