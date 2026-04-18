@@ -1,27 +1,25 @@
 # syntax=docker/dockerfile:1.7
-# Build stage
-FROM oven/bun:1 AS build
+# Build stage — pinned to the host arch so Vite/Nitro never run under QEMU
+FROM --platform=$BUILDPLATFORM oven/bun:1 AS build
 WORKDIR /app
 
 ENV NODE_ENV=production \
-    NUXT_TELEMETRY_DISABLED=1
+    NUXT_TELEMETRY_DISABLED=1 \
+    CI=true
 
 COPY package.json bun.lock* ./
 
-# Cache the bun package store so reinstalls are near-instant
-RUN --mount=type=cache,target=/root/.bun/install/cache \
+RUN --mount=type=cache,target=/root/.bun/install/cache,sharing=locked \
     bun install --frozen-lockfile --ignore-scripts
 
 COPY . .
 
-# Cache Nuxt/Nitro/Vite build artefacts across runs.
-# These caches are NOT copied into the final image — they just speed up rebuilds.
 RUN --mount=type=cache,target=/app/node_modules/.cache \
     --mount=type=cache,target=/app/.nuxt/cache \
     --mount=type=cache,target=/app/.nitro/cache \
     bunx nuxt prepare && bun run build
 
-# Production stage — only the built output ships
+# Production stage — runs on the target arch
 FROM oven/bun:1-slim AS production
 WORKDIR /app
 
@@ -30,4 +28,4 @@ ENV NODE_ENV=production
 COPY --from=build /app/.output /app
 
 EXPOSE 3000/tcp
-ENTRYPOINT ["bun", "--bun", "run", "/app/server/index.mjs"]
+ENTRYPOINT ["bun", "run", "/app/server/index.mjs"]

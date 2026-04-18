@@ -5,10 +5,18 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@pinia/nuxt'],
   css: ['~/assets/css/tailwind.css'],
+  sourcemap: { server: false, client: false },
   vite: {
     plugins: [
       tailwindcss(),
     ],
+    build: {
+      sourcemap: false,
+      target: 'esnext',
+    },
+  },
+  nitro: {
+    minify: true,
   },
   shadcn: {
     /**
