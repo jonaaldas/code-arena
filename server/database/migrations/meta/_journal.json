@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1776532247254,
+      "tag": "0000_handy_talkback",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1776532692879,
+      "tag": "0001_dark_carlie_cooper",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1776549670287,
+      "tag": "0002_demonic_major_mapleleaf",
+      "breakpoints": true
+    }
+  ]
+}
