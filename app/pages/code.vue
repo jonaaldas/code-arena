@@ -26,10 +26,10 @@ async function verify() {
   });
   loading.value = false;
   result.match({
-    ok: (res) => {
+    ok: async (res) => {
       data.value = res;
     },
-    err: (m) => {
+    err: async (m) => {
       errorMessage.value = m;
     },
   });

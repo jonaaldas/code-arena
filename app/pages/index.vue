@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {
   CalendarDate,
-  today,
   getLocalTimeZone,
   type DateValue,
 } from '@internationalized/date';
@@ -119,8 +118,9 @@ function generateLink() {
 
 function prefill() {
   generateLink();
-  interviewDate.value = today(getLocalTimeZone()).add({ days: 1 });
-  interviewTime.value = '14:00';
+  const now = new Date();
+  interviewDate.value = new CalendarDate(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  interviewTime.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 }
 
 async function copyLink() {
