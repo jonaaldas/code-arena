@@ -24,6 +24,9 @@ export default defineNuxtConfig({
   },
   nitro: {
     minify: true,
+    experimental: {
+      websocket: true
+    }
   },
   shadcn: {
     /**
