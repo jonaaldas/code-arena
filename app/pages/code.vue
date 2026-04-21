@@ -21,7 +21,7 @@ async function verify() {
   }
   loading.value = true;
   const result = await Result.tryPromise({
-    try: () => $fetch<VerifyResponse>(`/api/invitations/verify/${token.value}`),
+    try: () => $fetch<VerifyResponse>(`/api/invitations/room/${token.value}`),
     catch: (e: any) => e?.data?.statusMessage || e?.message || 'Invalid or expired invitation',
   });
   loading.value = false;

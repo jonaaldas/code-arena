@@ -38,7 +38,7 @@ async function verify() {
   }
   loading.value = true;
   const result = await Result.tryPromise({
-    try: () => $fetch<VerifyResponse>(`/api/invitations/verify/${token.value}`),
+    try: () => $fetch<VerifyResponse>(`/api/invitations/guest/verify/${token.value}`),
     catch: (e: any) => e?.data?.statusMessage || e?.message || 'Invalid or expired invitation',
   });
   loading.value = false;
@@ -57,7 +57,7 @@ const accepting = ref(false);
 async function acceptInvitation() {
   accepting.value = true;
   const result = await Result.tryPromise({
-    try: () => $fetch(`/api/invitations/accept/${token.value}`, { method: 'POST' }),
+    try: () => $fetch(`/api/invitations/guest/accept/${token.value}`, { method: 'POST' }),
     catch: (e: any) => e?.data?.statusMessage || e?.message || 'Failed to accept invitation',
   });
   accepting.value = false;
@@ -103,10 +103,10 @@ onMounted(verify);
           <p v-if="scheduledDisplay">
             Scheduled for <strong>{{ scheduledDisplay }}</strong>
             <span class="block text-xs text-muted-foreground mt-1"> Your local time ({{ localTimezone }}) </span>
-            <Button :disabled="accepting" @click="acceptInvitation">
-              {{ accepting ? 'Accepting…' : 'Start Interview' }}
-            </Button>
           </p>
+          <Button :disabled="accepting" @click="acceptInvitation">
+            {{ accepting ? 'Accepting…' : 'Start Interview' }}
+          </Button>
         </div>
 
         <div v-else class="flex items-center gap-2 text-sm text-destructive">

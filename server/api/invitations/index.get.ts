@@ -34,6 +34,12 @@ export default defineAuthenticatedEventHandler(async (event) => {
         throw createError({ statusCode: 500, statusMessage: result.error });
     }
 
+    const now = Date.now();
+    const FIFTEEN_MIN_MS = 15 * 60 * 1000;
+    const startsWithin15Min = (scheduledAt: Date) => {
+        return Math.abs(scheduledAt.getTime() - now) <= FIFTEEN_MIN_MS;
+    };
+
     return result.value.map((row) => ({
         id: row.id,
         link: row.link,
@@ -44,5 +50,6 @@ export default defineAuthenticatedEventHandler(async (event) => {
         scheduledAt: row.timestamp.toISOString(),
         createdAt: row.createdAt.toISOString(),
         updatedAt: row.updatedAt.toISOString(),
+        dueSoon: startsWithin15Min(row.timestamp),
     }));
 });

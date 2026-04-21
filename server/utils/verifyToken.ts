@@ -3,18 +3,18 @@ import { Result } from 'better-result';
 import { db } from './db';
 import { user_link_invitations } from '../database/schema';
 
+export type InvitationRole = 'owner' | 'guest';
+
 export type VerifiedInvitation = {
   id: string;
   ownerId: string;
   timestamp: Date;
+  role: InvitationRole;
 };
 
 export const INVITATION_GRACE_MS = 15 * 60 * 1000;
 
-export async function verifyToken(
-  token: string | undefined,
-  userId: string,
-): Promise<VerifiedInvitation> {
+async function lookupByToken(token: string | undefined) {
   if (!token) {
     throw createError({ statusCode: 400, statusMessage: 'Missing token' });
   }
@@ -43,6 +43,32 @@ export async function verifyToken(
     throw createError({ statusCode: 404, statusMessage: 'Invalid invitation token' });
   }
 
+  if (row.timestamp.getTime() + INVITATION_GRACE_MS < Date.now()) {
+    throw createError({ statusCode: 410, statusMessage: 'This invitation has expired' });
+  }
+
+  return row;
+}
+
+export async function verifyAsOwner(
+  token: string | undefined,
+  userId: string,
+): Promise<VerifiedInvitation> {
+  const row = await lookupByToken(token);
+
+  if (row.ownerId !== userId) {
+    throw createError({ statusCode: 403, statusMessage: 'Not your invitation' });
+  }
+
+  return { ...row, role: 'owner' };
+}
+
+export async function verifyAsGuest(
+  token: string | undefined,
+  userId: string,
+): Promise<VerifiedInvitation> {
+  const row = await lookupByToken(token);
+
   if (row.ownerId === userId) {
     throw createError({
       statusCode: 400,
@@ -50,9 +76,17 @@ export async function verifyToken(
     });
   }
 
-  if (row.timestamp.getTime() + INVITATION_GRACE_MS < Date.now()) {
-    throw createError({ statusCode: 410, statusMessage: 'This invitation has expired' });
-  }
+  return { ...row, role: 'guest' };
+}
 
-  return row;
+export async function verifyRoomAccess(
+  token: string | undefined,
+  userId: string,
+): Promise<VerifiedInvitation> {
+  const row = await lookupByToken(token);
+
+  return {
+    ...row,
+    role: row.ownerId === userId ? 'owner' : 'guest',
+  };
 }

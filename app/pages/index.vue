@@ -12,6 +12,7 @@ import Button from '@/components/ui/button/Button.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Table,
@@ -52,6 +53,7 @@ type Invitation = {
   scheduledAt: string;
   createdAt: string;
   updatedAt: string;
+  dueSoon: boolean;
 };
 
 const userStore = useUserStore();
@@ -68,6 +70,14 @@ const saving = ref(false);
 
 const invitations = ref<Invitation[]>([]);
 const loadingList = ref(false);
+
+const dueSoonInvitations = computed(() => invitations.value.filter((row) => row.dueSoon));
+
+function enterRoom(row: Invitation) {
+  const token = row.link.split('/invite/')[1];
+  if (!token) return;
+  navigateTo(`/code/${token}`);
+}
 
 const deleteTarget = ref<Invitation | null>(null);
 const deleting = ref(false);
@@ -256,6 +266,27 @@ if (userStore.user) {
         <p>Welcome back, {{ userStore.user.name }}.</p>
         <Button @click="openCreate">Invite people</Button>
       </div>
+
+      <Card v-if="dueSoonInvitations.length" class="border-amber-300 bg-amber-50">
+        <CardHeader>
+          <CardTitle>Starting soon</CardTitle>
+        </CardHeader>
+        <CardContent class="flex flex-col gap-2">
+          <div
+            v-for="row in dueSoonInvitations"
+            :key="row.id"
+            class="flex items-center justify-between gap-4 rounded-md border bg-background px-4 py-3"
+          >
+            <div class="flex flex-col">
+              <span class="text-sm font-medium">{{ formatRowDate(row.scheduledAt) }}</span>
+              <span class="font-mono text-xs text-muted-foreground truncate max-w-[360px]">
+                {{ row.link }}
+              </span>
+            </div>
+            <Button size="sm" @click="enterRoom(row)">Enter room</Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <div class="rounded-md border">
         <Table>
